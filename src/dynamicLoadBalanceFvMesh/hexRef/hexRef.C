@@ -555,7 +555,8 @@ Foam::label Foam::hexRef::getAnchorCell
 {
     if (cellAnchorPoints[celli].size())
     {
-        label index = findIndex(cellAnchorPoints[celli], pointi);
+        // label index = findIndex(cellAnchorPoints[celli], pointi);
+        const label index = cellAnchorPoints[celli].find(pointi);
 
         if (index != -1)
         {
@@ -570,7 +571,8 @@ Foam::label Foam::hexRef::getAnchorCell
 
         forAll(f, fp)
         {
-            label index = findIndex(cellAnchorPoints[celli], f[fp]);
+            // label index = findIndex(cellAnchorPoints[celli], f[fp]);
+            const label index = cellAnchorPoints[celli].find(f[fp]);
 
             if (index != -1)
             {
@@ -846,8 +848,8 @@ void Foam::hexRef::checkInternalOrientation
     face compactFace(identity(newFace.size()));
     pointField compactPoints(meshMod.points(), newFace);
 
-    vector n(compactFace.normal(compactPoints));
-
+    // vector n(compactFace.normal(compactPoints));
+    vector n(compactFace.areaNormal(compactPoints));
     vector dir(neiPt - ownPt);
 
     if ((dir & n) < 0)
@@ -892,7 +894,8 @@ void Foam::hexRef::checkBoundaryOrientation
     face compactFace(identity(newFace.size()));
     pointField compactPoints(meshMod.points(), newFace);
 
-    vector n(compactFace.normal(compactPoints));
+    // vector n(compactFace.normal(compactPoints));
+    vector n(compactFace.areaNormal(compactPoints));
 
     vector dir(boundaryPt - ownPt);
 
@@ -1340,7 +1343,8 @@ bool Foam::hexRef::matchHexShape
                         if (iter != pointFaces.end())
                         {
                             labelList& pFaces = iter();
-                            if (findIndex(pFaces, facei) == -1)
+                            // if (findIndex(pFaces, facei) == -1)
+                            if (pFaces.find(facei) == -1)
                             {
                                 pFaces.append(facei);
                             }
@@ -2996,7 +3000,8 @@ void Foam::hexRef::subset
 
         cellLevel_.transfer(newCellLevel);
 
-        if (findIndex(cellLevel_, -1) != -1)
+        // if (findIndex(cellLevel_, -1) != -1)
+        if (cellLevel_.find(-1) != -1)
         {
             FatalErrorInFunction
                 << "Problem : "
@@ -3017,7 +3022,8 @@ void Foam::hexRef::subset
 
         pointLevel_.transfer(newPointLevel);
 
-        if (findIndex(pointLevel_, -1) != -1)
+        // if (findIndex(pointLevel_, -1) != -1)
+        if (pointLevel_.find(-1) != -1)
         {
             FatalErrorInFunction
                 << "Problem : "

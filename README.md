@@ -11,13 +11,18 @@ Rettenmaier, Daniel, et al. "Load balanced 2D and 3D adaptive mesh refinement in
 link:
 https://www.sciencedirect.com/science/article/pii/S2352711018301699
 
-port to the OpenFOAM+ version v1812 and v2006
+port to the OpenFOAM+ version v2006
 
 refinement selection algoritm is based on foam extended 4.1
 
+## Changes to Henning Scheuflers Version
+
+- adapted the code to allow compilation with OpenFOAM v2006
+- replaced deprecated operators
+
 ## Getting Started
 
-install OpenFOAM v1812
+install OpenFOAM v2006
 
 compile the library
 
@@ -25,7 +30,7 @@ compile the library
 
 ### Prerequisites
 
-Requires OpenFOAM v1812:
+Requires OpenFOAM v2006:
 
 ```
 https://www.openfoam.com/download/release-history.php
@@ -34,13 +39,13 @@ https://www.openfoam.com/download/release-history.php
 ### Installing
 
 ```
- git clone https://github.com/HenningScheufler/multiDimAMR
+ git clone https://github.com/broooooot/multiDimAMR
  cd multiDimAMR
  ./Allwmake
 ```
 ### Usage
 
-add to contolDict:
+add to controlDict:
 ```
 libs
 (

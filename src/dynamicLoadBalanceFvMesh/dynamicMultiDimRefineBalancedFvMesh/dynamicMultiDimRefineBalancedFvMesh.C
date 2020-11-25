@@ -96,21 +96,23 @@ bool Foam::dynamicMultiDimRefineBalancedFvMesh::update()
         correctBoundaries<tensor>();
     }
 
-    dictionary decomposeParDict
-    (
-        IOdictionary
-        (
-            IOobject
-            (
-                "decomposeParDict",
-                time().system(),
-                *this,
-                IOobject::MUST_READ_IF_MODIFIED,
-                IOobject::NO_WRITE,
-                false
-            )
-        )
-    );
+    // Info<< "Reading decomposeParDict"<< endl;
+    // dictionary decomposeParDict
+    // (
+    //     IOdictionary
+    //     (
+    //         IOobject
+    //         (
+    //             "decomposeParDict",
+    //             time().system(),
+    //             *this,
+    //             IOobject::MUST_READ_IF_MODIFIED,
+    //             IOobject::NO_WRITE,
+    //             false
+    //         )
+    //     )
+    // );
+    // Info<< "Finished reading decomposeParDict"<< endl;
 
     rebalance_ = false;
 
