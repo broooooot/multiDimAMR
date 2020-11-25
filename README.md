@@ -22,22 +22,16 @@ refinement selection algoritm is based on foam extended 4.1
 
 ## Getting Started
 
-install OpenFOAM v2006
-
-compile the library
-
-./Allwmake
-
 ### Prerequisites
 
-Requires OpenFOAM v2006:
+Install OpenFOAM v2006:
 
 ```
 https://www.openfoam.com/download/release-history.php
 ```
 
 ### Installing
-
+clone and compile this library
 ```
  git clone https://github.com/broooooot/multiDimAMR
  cd multiDimAMR
@@ -53,12 +47,12 @@ libs
 );
 ```
 
-cat decomposeParDict
+system/decomposeParDict
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v1812                                   |
+|  \\    /   O peration     | Version:  v2006                                   |
 |   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -86,12 +80,12 @@ constraints
 }
 ```
 
-cat balanceParDict:
+system/balanceParDict:
 ```
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v1812                                 |
+|  \\    /   O peration     | Version:  v2006                                 |
 |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
