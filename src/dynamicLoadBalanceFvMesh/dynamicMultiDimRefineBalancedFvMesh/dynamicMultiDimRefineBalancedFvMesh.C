@@ -231,7 +231,7 @@ bool Foam::dynamicMultiDimRefineBalancedFvMesh::update()
                             IOobject
                             (
                                 "balanceParDict",
-                                time().system(),
+                                time().constant(),
                                 *this,
                                 IOobject::MUST_READ_IF_MODIFIED,
                                 IOobject::NO_WRITE
