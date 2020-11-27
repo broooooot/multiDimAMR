@@ -56,10 +56,8 @@ libs
 );
 ```
 
-and add dynamicMeshDict inside the constant/ folder. You'll find
-a template in the dict/ folder. 
-
-The balancing process does not work at the moment so you don't need
+and add dynamicMeshDict to the constant/ folder. You'll find
+a template in the dict/ folder. The balancing process does not work at the moment so you don't need
 the balanceParDict.
 
 ## License
