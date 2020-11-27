@@ -820,10 +820,19 @@ Foam::labelList Foam::dynamicMultiDimRefineFvMesh::selectRefineCells
 
             if (returnReduce(candidates.size(), sumOp<label>()) > nTotToRefine)
             {
+                Info
+                    << "Limiting number of cells to refine"
+                    << endl;
+
                 break;
             }
         }
     }
+
+    Info
+        << "Trying to get consistent refinement set for "
+        << returnReduce(candidates.size(), sumOp<label>())
+        << " cells"<< endl;
 
     // Guarantee 2:1 refinement after refinement
     labelList consistentSet
@@ -874,8 +883,11 @@ void Foam::dynamicMultiDimRefineFvMesh::extendMarkedCells
             markedCell.set(faceOwner()[facei]);
         }
     }
+    
+    Info
+        << "Preventing "<< markedCell.count() 
+        << " neighbouring cells from being unrefined." <<endl;
 }
-
 
 void Foam::dynamicMultiDimRefineFvMesh::checkEightAnchorPoints
 (
@@ -1085,8 +1097,6 @@ Foam::dynamicMultiDimRefineFvMesh::dynamicMultiDimRefineFvMesh(const IOobject& i
         protectedCells.write();
     }
 }
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::dynamicMultiDimRefineFvMesh::update()
@@ -1137,6 +1147,9 @@ bool Foam::dynamicMultiDimRefineFvMesh::update()
 
     if (time().timeIndex() > 0 && time().timeIndex() % refineInterval == 0)
     {
+        Info
+            << "Updating mesh for region "<< this->name() << "..."<< endl;
+
         const label maxCells = refineDict.get<label>("maxCells");
 
         if (maxCells <= 0)
@@ -1162,6 +1175,8 @@ bool Foam::dynamicMultiDimRefineFvMesh::update()
         const label nBufferLayers = refineDict.get<label>("nBufferLayers");
 
         // Cells marked for refinement or otherwise protected from unrefinement.
+        dictionary criteriaDict = refineDict.subDict("adaptCriteria");
+        adaptCriteriaPtr_->updateDefaultValues(maxRefinement, nBufferLayers, criteriaDict);
         bitSet refineCell = adaptCriteriaPtr_->refinementCellCandidates();
 
         if (globalData().nTotalCells() < maxCells)

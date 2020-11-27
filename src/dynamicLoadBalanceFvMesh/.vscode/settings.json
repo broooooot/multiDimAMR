@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "*Dict": "OpenFOAM",
+        "*Properties": "OpenFOAM",
+        "fvSchemes": "OpenFOAM",
+        "fvSolution": "OpenFOAM",
+        "**/constant/g": "OpenFOAM",
+        "**/0/*": "OpenFOAM",
+        "dynamicMultiDimRefineFvMesh.C": "cpp",
+        "fieldBounds.C": "cpp",
+        "composedAdaptCriteria.C": "cpp",
+        "dynamicMultiDimRefineBalancedFvMesh.C": "cpp",
+        "hexRef.C": "cpp",
+        "hexRefData.C": "cpp",
+        "hexRefNew.C": "cpp",
+        "hexRef3D.C": "cpp",
+        "hexRef4.C": "cpp",
+        "adaptCriteria.C": "cpp",
+        "geometric.C": "cpp"
+    }
+}

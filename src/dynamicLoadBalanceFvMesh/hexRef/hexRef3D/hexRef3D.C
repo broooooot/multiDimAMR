@@ -2355,7 +2355,8 @@ Foam::labelList Foam::hexRef3D::selectUnrefineElems
         )
     );
     Info<< "Selected " << returnReduce(consistentSet.size(), sumOp<label>())
-        << " split points out of a possible "
+        << " split points (equals removal of " << returnReduce(consistentSet.size(), sumOp<label>())*7
+        << " cells) out of a possible "
         << returnReduce(splitPoints.size(), sumOp<label>())
         << "." << endl;
 

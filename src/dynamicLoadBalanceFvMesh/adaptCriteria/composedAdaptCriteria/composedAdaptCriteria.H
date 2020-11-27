@@ -61,7 +61,6 @@ class composedAdaptCriteria
         {
             opOr,
             opAnd,
-            opXor,
         };
 
         //- Operation type names
@@ -104,6 +103,9 @@ public:
 
 
     // Member Functions
+        
+        //- added to allow for runtime-modifications
+        virtual void reReadDictionary(const dictionary& reReadDict);
 
         // Selection of refinement/unrefinement candidates
 

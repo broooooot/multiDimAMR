@@ -51,10 +51,10 @@ class geometric
     public adaptCriteria
 {
     // Private data
-        
+    const word surftype_;
+
     //- surface pointer
     autoPtr<searchableSurface> surfPtr_;
-
 
     // Private Member Functions
 
@@ -85,6 +85,9 @@ public:
 
 
     // Member Functions
+
+        //- added to allow for runtime-modifications
+        virtual void reReadDictionary(const dictionary& reReadDict);    
 
         // Selection of refinement/unrefinement candidates
 

@@ -77,10 +77,6 @@ class adaptCriteria
         //- Const reference to fvMesh
         const fvMesh& mesh_;
 
-        //- Refinement selection dictionary (subdictionary of
-        //  dynamicPolyRefinementFvMeshCoeffs dictionary)
-        const dictionary coeffDict_;
-
     private:
     // Private Member Functions
 
@@ -96,15 +92,16 @@ protected:
     // protected data
 
     // optional maxLevel entry
-    const label maxCellLevel_;
+    label maxCellLevel_;
 
     // optional minLevel entry
-    const label minCellLevel_;
+    label minCellLevel_;
 
-    // optional minLevel entry
-    const bool negate_;
+    //- layers to extend the refinementregion
+    label nLayer_;
 
-    // Protected member functions
+    // optional negate entry
+    bool negate_;
 
         // Access functions for derived classes
 
@@ -112,12 +109,6 @@ protected:
             const fvMesh& mesh() const
             {
                 return mesh_;
-            }
-
-            //- Const access to the coefficient dictionary
-            const dictionary& coeffDict() const
-            {
-                return coeffDict_;
             }
 
 
@@ -150,6 +141,14 @@ public:
         adaptCriteria(const fvMesh& mesh, const dictionary& dict);
 
 
+    // Functions
+        void updateDefaultValues
+        (
+            const label maxCellLevel,
+            const label nLayers, 
+            const dictionary& criteriaDict
+        );
+
     // Selectors
 
         //- Return an autoPtr to the selected adaptCriteria
@@ -165,6 +164,9 @@ public:
 
 
     // Member Functions
+
+    // allow for runtime-modifications
+    virtual void reReadDictionary(const dictionary& reReadDict) = 0;
 
         // Selection of refinement/unrefinement candidates
 

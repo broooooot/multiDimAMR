@@ -33,6 +33,7 @@ Author
 #include "volPointInterpolation.H"
 #include "labelIOField.H"
 #include "syncTools.H"
+#include "fvCFD.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -56,11 +57,7 @@ Foam::fieldBounds::fieldBounds
     const dictionary& dict
 )
 :
-    adaptCriteria(mesh, dict),
-    fieldName_(coeffDict().lookup("fieldName")),
-    lowerBound_(coeffDict().get<scalar>("lowerBound")),
-    upperBound_(coeffDict().get<scalar>("upperBound")),
-    nLayer_(coeffDict().lookupOrDefault<scalar>("nLayer",0))
+    adaptCriteria(mesh, dict)
 {}
 
 
@@ -105,14 +102,100 @@ void Foam::fieldBounds::extendMarkedCells
     }
 }
 
+Foam::tmp<volScalarField>
+Foam::fieldBounds::getVolScalarField() const
+{
+    // determine whether volScalarField or volVectorField
+    const bool isVolScalarField = mesh().foundObject<volScalarField>(fieldName_);
+    const bool isVolVectorField = mesh().foundObject<volVectorField>(fieldName_);
+
+    if (!isVolScalarField && !isVolVectorField )
+    {
+        FatalErrorIn
+        (
+        "adaptCriteria::fieldBounds::getVolScalarField()\n"
+        )   << "the variable the (un)refinement is based on ("
+            << fieldName_ 
+            << ") has to be either a volVectorField or a volScalarField"
+            << exit(FatalError);
+    }
+
+    // and calculate gradient or curl if specified
+    if (option_ == "none")
+    {
+        return isVolScalarField ?
+            tmp<volScalarField>(mesh().lookupObject<volScalarField>(fieldName_)):
+            mag(mesh().lookupObject<volVectorField>(fieldName_));
+    }
+    else if (option_ == "grad")
+    {
+        return isVolScalarField ?
+            mag(fvc::grad(mesh().lookupObject<volScalarField>(fieldName_))) :
+            mag(fvc::grad(mag(mesh().lookupObject<volVectorField>(fieldName_))));
+    }
+    else if (option_ == "curl")
+    {
+        if (!isVolVectorField)
+        {
+            FatalErrorIn
+            (
+            "adaptCriteria::fieldBounds::getVolScalarField()\n"
+            )   << "cannot calculate the curl of the volScalarField "
+                << fieldName_
+                << exit(FatalError);
+        }
+
+        return mag(fvc::curl(mesh().lookupObject<volVectorField>(fieldName_)));
+    }
+    else
+    {
+        FatalErrorIn
+        (
+        "adaptCriteria::fieldBounds::getVolScalarField()\n"
+        )   << "Unknown option for field "
+            << fieldName_ << endl << endl
+            << "Valid options are :" << endl
+            << "(none grad curl)"
+            << exit(FatalError);
+
+        // to suppress compiler warning
+        return mesh().lookupObject<volScalarField>(fieldName_);
+    }
+}
+
+void Foam::fieldBounds::reReadDictionary
+(
+    const dictionary& reReadDict
+)
+{
+    fieldName_ = reReadDict.get<word>("fieldName");
+    option_ = reReadDict.lookupOrDefault<word>("option", "none");
+    lowerBound_ = reReadDict.get<scalar>("lowerBound");
+    upperBound_ = reReadDict.get<scalar>("upperBound");
+    lowerBoundUnref_ = reReadDict.lookupOrDefault<scalar>("lowerBoundUnrefine", lowerBound_);
+    upperBoundUnref_ = reReadDict.lookupOrDefault<scalar>("upperBoundUnrefine", upperBound_);
+}
+
 Foam::bitSet
 Foam::fieldBounds::refinementCellCandidates() const
 {
-    bitSet refineCells(mesh().nCells(),false);
+    Info
+        << "Selecting refinement candidate cells based on ";
 
+        if (option_=="grad" || option_=="curl")
+        {
+            Info << option_ << "(" << fieldName_ << ")" << endl;
+        }
+        else
+        {
+            Info<<"field "<< fieldName_ << endl;
+        }
+    
+    bitSet refineCells(mesh().nCells(),false);
+    
     // Get the field
-    const volScalarField& vField =
-        mesh().lookupObject<volScalarField>(fieldName_);
+    const volScalarField& vField = getVolScalarField();
+
     // get cellLevels
     const labelIOList& curCellLevel =
         mesh().lookupObject<labelIOList>("cellLevel");
@@ -138,12 +221,20 @@ Foam::fieldBounds::refinementCellCandidates() const
         }
     }
 
+    const label nLocalCandidates = refineCells.count();
+    const label nCandidates = returnReduce(nLocalCandidates, sumOp<label>());
+
+    Info
+        << "-> "<< nCandidates<< " cells selected"<< endl;
+
     // Extend with a buffer layer to prevent neighbouring points
     // being unrefined.
-    for (label i = 0; i < nLayer_; ++i)
-    {
-        extendMarkedCells(refineCells);
-    }
+    
+    // this also happens afterwards, so why here?
+    // for (label i = 0; i < nLayer_; ++i)
+    // {
+    //     extendMarkedCells(refineCells);
+    // }
 
     // Print out some information
     // Info<< "Selection algorithm " << type() << " selected "
@@ -163,11 +254,22 @@ Foam::fieldBounds::refinementCellCandidates() const
 Foam::bitSet
 Foam::fieldBounds::unrefinementPointCandidates() const
 {
+    Info
+        << "Selecting unrefinement candidate points based on ";
+    
+        if (option_=="grad" || option_=="curl")
+        {
+            Info<< option_ << "(" << fieldName_ << ")" << endl;
+        }
+        else
+        {
+            Info<< "field "<< fieldName_ << endl;
+        }
+    
     bitSet unrefinePoints(mesh().nPoints(),false);
 
     // Get the field
-    const volScalarField& vField =
-        mesh().lookupObject<volScalarField>(fieldName_);
+    const volScalarField& vField = getVolScalarField();
 
     // get cellLevels
     const labelIOList& curCellLevel =
@@ -184,11 +286,13 @@ Foam::fieldBounds::unrefinementPointCandidates() const
             bool unRefPoint = true;
             const scalar pointValue = vfIn[celli];
             // all cells need to fullfill this criteria
+
             if
             (
-                !(pointValue > upperBound_
-                || pointValue < lowerBound_
+                !((pointValue > upperBoundUnref_
+                || pointValue < lowerBoundUnref_
                 || curCellLevel[celli] > maxCellLevel_)
+                && curCellLevel[celli] > minCellLevel_)
             )
             {
                 unRefPoint = false;
@@ -204,6 +308,11 @@ Foam::fieldBounds::unrefinementPointCandidates() const
 
     syncTools::syncPointList(mesh(), unrefinePoints, minEqOp<unsigned int>(), 0);
 
+    const label nCandidates = returnReduce(unrefinePoints.count(), sumOp<label>());
+
+    Info
+        << "-> "<< nCandidates << " split points selected"<< endl;
+
     // Print out some information
     // Info<< "Selection algorithm " << type() << " selected "
     //     << returnReduce(unrefinePoints.toc().size(), sumOp<label>())
@@ -217,6 +326,5 @@ Foam::fieldBounds::unrefinementPointCandidates() const
 
     return unrefinePoints;
 }
-
 
 // ************************************************************************* //

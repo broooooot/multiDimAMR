@@ -59,6 +59,7 @@ Foam::geometric::geometric
 )
 :
     adaptCriteria(mesh, dict),
+    surftype_(dict.get<word>("surftype")),
     surfPtr_
     (
         searchableSurface::New
@@ -86,13 +87,27 @@ Foam::geometric::geometric
 Foam::geometric::~geometric()
 {}
 
-
 // * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * * //
-
+void Foam::geometric::reReadDictionary
+(
+    const dictionary& reReadDict
+)
+{
+    if (reReadDict.get<word>("surftype") != surftype_)
+    {
+        FatalErrorInFunction
+            << "The surface type can not be changed during runtime"
+            << exit(FatalError);
+    }
+}
 
 Foam::bitSet
 Foam::geometric::refinementCellCandidates() const
 {
+    Info
+        << "Selecting refinement candidate cells based on "
+        << surftype_<< endl;
+
     bitSet refineCells(mesh().nCells(),false);
 
     List<volumeType> insideGeom;
@@ -116,6 +131,11 @@ Foam::geometric::refinementCellCandidates() const
         }
     }
 
+    const label nLocalCandidates = refineCells.count();
+    const label nCandidates = returnReduce(nLocalCandidates, sumOp<label>());
+
+    Info
+        << "-> "<< nCandidates<< " cells selected"<< endl;
 
     // Print out some information
     // Info<< "Selection algorithm " << type() << " selected "
@@ -135,6 +155,10 @@ Foam::geometric::refinementCellCandidates() const
 Foam::bitSet
 Foam::geometric::unrefinementPointCandidates() const
 {
+    Info
+        << "Selecting unrefinement candidate points based on "
+        << surftype_<< endl;
+    
     bitSet unrefinePoints(mesh().nPoints(),false);
 
     List<volumeType> insideGeom;
@@ -155,6 +179,7 @@ Foam::geometric::unrefinementPointCandidates() const
             (
                 !(insideGeom[celli] == volumeType::INSIDE
                 || curCellLevel[celli] > maxCellLevel_)
+                || curCellLevel[celli] <= minCellLevel_
             )
             {
                 unRefPoint = false;
@@ -169,6 +194,11 @@ Foam::geometric::unrefinementPointCandidates() const
     }
 
     syncTools::syncPointList(mesh(), unrefinePoints, minEqOp<unsigned int>(), 0);
+
+    const label nCandidates = returnReduce(unrefinePoints.count(), sumOp<label>());
+
+    Info
+        << "-> "<< nCandidates << " split points selected"<< endl;
 
     // Print out some information
     // Info<< "Selection algorithm " << type() << " selected "

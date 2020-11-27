@@ -1,6 +1,6 @@
 # dynamicAMR
 
-## Descrition
+## Description
 
 dynamic meshing with load balancing for hexahedral meshes in 3D and 2D
 
@@ -15,10 +15,19 @@ port to the OpenFOAM+ version v2006
 
 refinement selection algoritm is based on foam extended 4.1
 
-## Changes to Henning Scheuflers Version
+## Changes wrt Henning Scheuflers Version
 
+### general
 - adapted the code to allow compilation with OpenFOAM v2006
 - replaced deprecated operators
+- load balancing does not work at the moment (don't know why)
+
+### new features
+- allow refinement based on gradient or curl of a field via extra keyword in dynamicMeshDict
+
+### removed 
+- folder and files which are not needed, focus is on adaptive mesh refinement (tutorials might follow at a later point)
+- removed possibility for XOR combination of refinement criteria (as I see no point in having that)
 
 ## Getting Started
 
@@ -31,7 +40,7 @@ https://www.openfoam.com/download/release-history.php
 ```
 
 ### Installing
-clone and compile this library
+Clone and compile this library
 ```
  git clone https://github.com/broooooot/multiDimAMR
  cd multiDimAMR
@@ -39,7 +48,7 @@ clone and compile this library
 ```
 ### Usage
 
-add to controlDict:
+Add this line to the controlDict
 ```
 libs
 (
@@ -47,73 +56,11 @@ libs
 );
 ```
 
-system/decomposeParDict
-```
-/*--------------------------------*- C++ -*----------------------------------*\
-| =========                 |                                                 |
-| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2006                                   |
-|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
-|    \\/     M anipulation  |                                                 |
-\*---------------------------------------------------------------------------*/
-FoamFile
-{
-    version     2.0;
-    format      ascii;
-    class       dictionary;
-    object      decomposeParDict;
-}
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+and add dynamicMeshDict inside the constant/ folder. You'll find
+a template in the dict/ folder. 
 
-numberOfSubdomains 4;
-
-method          scotch;
-
-constraints
-{
-    refinementHistoryMultiDim
-    {
-        //- Decompose cells such that all cell originating from single cell
-        //  end up on same processor
-        type    refinementHistoryMultiDim;
-    }
-}
-```
-
-system/balanceParDict:
-```
-/*--------------------------------*- C++ -*----------------------------------*\
-| =========                 |                                                 |
-| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2006                                 |
-|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
-|    \\/     M anipulation  |                                                 |
-\*---------------------------------------------------------------------------*/
-FoamFile
-{
-    version     2.0;
-    format      ascii;
-    class       dictionary;
-    location    "system";
-    object      balanceParDict;
-}
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-numberOfSubdomains 4;
-
-method          ptscotch; //clsutered //scotch
-
-constraints
-{
-    refinementHistoryMultiDim
-    {
-        //- Decompose cells such that all cell originating from single cell
-        //  end up on same processor
-        type    refinementHistoryMultiDim;
-    }
-}
-// ************************************************************************* //
-```
+The balancing process does not work at the moment so you don't need
+the balanceParDict.
 
 ## License
 

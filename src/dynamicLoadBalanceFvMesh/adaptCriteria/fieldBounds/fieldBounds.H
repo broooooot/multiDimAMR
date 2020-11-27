@@ -62,14 +62,20 @@ class fieldBounds
         //- Name of the field to refine
         word fieldName_;
 
+        //- option for fieldName, i.e. grad for gradient
+        word option_;
+
         //- Lower bound for the field
         scalar lowerBound_;
 
         //- Upper bound for the field
         scalar upperBound_;
 
-        //- layers to extend the refinementregion
-        scalar nLayer_;
+        // - Lower bound for unrefinement
+        scalar lowerBoundUnref_;
+
+        // - Upper bound for unrefinement
+        scalar upperBoundUnref_;
 
 
     // Private Member Functions
@@ -83,6 +89,8 @@ class fieldBounds
         //- Disallow default bitwise assignment
         void operator=(const fieldBounds&);
 
+        //- added for gradient / curl calculation
+        tmp<volScalarField> getVolScalarField() const;
 
 public:
 
@@ -101,6 +109,9 @@ public:
 
 
     // Member Functions
+        
+        //- added to allow for runtime-modifications
+        virtual void reReadDictionary(const dictionary& reReadDict);
 
         // Selection of refinement/unrefinement candidates
 

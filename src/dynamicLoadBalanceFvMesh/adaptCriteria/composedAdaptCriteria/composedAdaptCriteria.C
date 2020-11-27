@@ -54,7 +54,6 @@ Foam::composedAdaptCriteria::operationTypeNames_
 
     { operationType::opOr, "or" },
     { operationType::opAnd, "and" },
-    { operationType::opXor, "xor" },
 
 });
 
@@ -73,9 +72,15 @@ Foam::composedAdaptCriteria::composedAdaptCriteria
     // Read basic refinement selections
     PtrList<entry> criteriaEntries
     (
-        coeffDict().lookup("criteria")
+        dict.lookup("criteria")
     );
-    Info << "criteriaEntries.size() " << criteriaEntries.size() << endl;
+
+    Info << "Using multiple criteria for mesh refinement"<< nl<< "( ";
+    forAll(criteriaEntries, Index)
+    {
+        Info << criteriaEntries[Index].name() << " ";
+    }
+    Info<< ")"<< endl;
 
     criteriaSelections_.setSize(criteriaEntries.size());
 
@@ -98,9 +103,23 @@ Foam::composedAdaptCriteria::composedAdaptCriteria
 
 Foam::composedAdaptCriteria::~composedAdaptCriteria()
 {}
-
-
+            
 // * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * * //
+void Foam::composedAdaptCriteria::reReadDictionary
+(
+    const dictionary& reReadDict
+)
+{       
+    PtrList<entry> criteriaEntries
+    (
+        reReadDict.lookup("criteria")
+    );
+
+    forAll(criteriaSelections_, brsI)
+    {
+        criteriaSelections_[brsI].reReadDictionary(criteriaEntries[brsI].dict());
+    }
+}    
 
 Foam::bitSet
 Foam::composedAdaptCriteria::refinementCellCandidates() const
@@ -125,19 +144,16 @@ Foam::composedAdaptCriteria::refinementCellCandidates() const
         {
             switch (operation_)
             {
+                // 11001 | 01101 = 11101
                 case opOr:
                 {
                     refineCells = refineCells | curRefCandidates;
                     break;
                 }
+                // 11001 & 01101 = 01001
                 case opAnd:
                 {
                     refineCells = refineCells & curRefCandidates;
-                    break;
-                }
-                case opXor:
-                {
-                    refineCells = refineCells ^ curRefCandidates;
                     break;
                 }
                 default:
@@ -146,9 +162,26 @@ Foam::composedAdaptCriteria::refinementCellCandidates() const
                     break;
                 }
             }
-        }
-        
+        }        
     }
+
+    Info
+        << "Selected " << returnReduce(refineCells.count() , sumOp<label>())
+        << " candidate cells which";
+
+        switch (operation_)
+        {
+            case opOr:
+            {
+                Info<< " meet at least one criterion."<< endl;
+                break;
+            }
+            case opAnd:
+            {
+                Info<< " meet all criteria."<< endl;
+                break;
+            }
+        }
 
     // // Create storage for collection of final cell candidates. Assume that
     // // one fifth of the cells will be marked to prevent excessive resizing
@@ -211,22 +244,18 @@ Foam::composedAdaptCriteria::unrefinementPointCandidates() const
         {
             switch (operation_)
             {
-                // unrefine if all points match the criteria
+                // refine cell if it matches at least ONE criteria
+                // so unrefine only if it matches ALL unrefinement criteria
                 case opOr:
                 {
                     unrefinePoints = unrefinePoints & curUnRefCandidates;
                     break;
                 }
-                // unrefine if one point does not match the criteria
+                // refine cell if it matches ALL criteria
+                // so unrefine if it matches even ONE unrefinement criteria
                 case opAnd:
                 {
                     unrefinePoints = unrefinePoints | curUnRefCandidates;
-                    break;
-                }
-                // unrefine if not xor? not really sure
-                case opXor:
-                {
-                    unrefinePoints = ~(unrefinePoints ^ curUnRefCandidates);
                     break;
                 }
                 default:
@@ -237,6 +266,24 @@ Foam::composedAdaptCriteria::unrefinementPointCandidates() const
             }
         }
     }
+
+    Info
+        << "Selected " << returnReduce(unrefinePoints.count() , sumOp<label>())
+        << " candidate points which";
+
+        switch (operation_)
+        {
+            case opOr:
+            {
+                Info<< " meet all criteria."<< endl;
+                break;
+            }
+            case opAnd:
+            {
+                Info<< " meet at least one criterion."<< endl;
+                break;
+            }
+        }
 
     // // Create storage for collection of final point candidates. Assume that one
     // // tenth of the points will be marked to prevent excessive resizing

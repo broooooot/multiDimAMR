@@ -1,0 +1,146 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// note: dynamicMeshDict is expected in constant folder 
+// (but can be modified during runtime)
+// one symlink is needed inside each processor*/constant folder for parallel runs
+// for multi-region cases constant/regionName and processor*/constant/regionName
+
+dynamicFvMesh   dynamicMultiDimRefineBalancedFvMesh; //dynamicMultiDimRefineFvMesh
+
+// entries needed for dynamicMultiDimRefineBalancedFvMesh
+enableBalancing false;
+allowableImbalance 0.10;
+
+adaptCriteria
+{
+    // // template for single criterion 'fieldBounds'
+        // type fieldBounds;  // 'fieldBounds' or 'geometric', not runtime-modifiable
+        // fieldName U;    // 'volScalarField' or 'volVectorField'
+        // option  grad;   // optional ('none', 'grad', 'curl')
+        // lowerBound 500; // mandatory
+        // upperBound 5e4; // mandatory
+        // lowerBoundUnrefine 500; // optional (default is 'lowerBound')
+        // upperBoundUnrefine 5e4; // optional (default is 'upperBound')
+        // maxCellLevel 2; // optional (default is maxRefinement)
+        // minCellLevel 0; // optional (default is 0)
+        // nLayer 2;       // optional (default is nBufferLayers)
+        // negate false;   // optional (default is 'false')
+    
+    // // template for single criterion 'geometric'
+        // type geometric;
+        // surftype    searchableBox;  // searchableSurface type (not runtime-modifiable)
+        // min     (0 0 0);  // (not runtime-modifiable)
+        // max     (1 1 1);  // (not runtime-modifiable)
+        // maxCellLevel  2;  // optional (default is maxRefinement)
+        // minCellLevel  0;  // optional (default is 0)
+        // nLayer  2;        // optional (default is nBufferLayers)
+        // negate false;     // optional (default is 'false')
+    
+    // template for multiple criteria
+        // type composedAdaptCriteria;
+        
+        // // allowed are 'and' or 'or' wrt the defined criteria
+        // operation and;
+        
+        // // if multiple criteria are used there has to be a
+        // // criteria dict with the refinement specifications
+        // criteria
+        // (
+        // // note: for a volVectorField, mag(volVectorField) is used as the field
+        // // note: for gradient option, mag(grad(fieldName)) is used as criterion
+        // // note: the 'curl' option is only avaiable for volVectorFields
+        //
+        //     crit_1
+        //     {
+        //         type fieldBounds;  // 'fieldBounds' or 'geometric', not runtime-modifiable
+        //         fieldName U;    // 'volScalarField' or 'volVectorField'
+        //         option  curl;   // optional ('none', 'grad', 'curl')
+        //         lowerBound 500; // mandatory
+        //         upperBound 5e4; // mandatory
+        //         lowerBoundUnrefine 500; // optional (default is 'lowerBound')
+        //         upperBoundUnrefine 5e4; // optional (default is 'upperBound')
+        //         maxCellLevel 2; // optional (default is maxRefinement)
+        //         minCellLevel 0; // optional (default is 0)
+        //         nLayer 2;       // optional (default is nBufferLayers)
+        //         negate false;   // optional (default is 'false')
+        //     }
+        // 
+        //     crit_2
+        //     {
+        //         type fieldBounds;  // 'fieldBounds' or 'geometric' (not runtime-modifiable)
+        //         fieldName T;    // 'volScalarField' or 'volVectorField'
+        //         option  grad;   // optional ('none', 'grad', 'curl')
+        //         lowerBound 1e5; // mandatory
+        //         upperBound 2.5e5; // mandatory
+        //         lowerBoundUnrefine 1e3; // optional (default is 'lowerBound')
+        //         upperBoundUnrefine 5e4; // optional (default is 'upperBound')
+        //         maxCellLevel 2; // optional (default is maxRefinement)
+        //         minCellLevel 1; // optional (default is 0)
+        //         nLayer 2;       // optional (default is nBufferLayers)
+        //         negate false;   // optional (default is 'false')
+        //     }
+        // 
+        //     crit_3
+        //     {
+        //         type geometric;
+        //         surftype    searchableBox;  // searchableSurface type (not runtime-modifiable)
+        //         min     (0 0 0);  // (not runtime-modifiable)
+        //         max     (1 1 1);  // (not runtime-modifiable)
+        //         maxCellLevel  2;  // optional (default is maxRefinement)
+        //         minCellLevel  0;  // optional (default is 0)
+        //         nLayer  2;        // optional (default is nBufferLayers)
+        //         negate false;     // optional (default is 'false')
+        //     }
+        // );
+}
+
+// How often to refine
+refineInterval  5;
+
+// Have slower than 2:1 refinement
+nBufferLayers   1;
+
+// Refine cells only up to maxRefinement levels
+maxRefinement   2;
+
+// Stop refinement if maxCells reached
+// beware that with the current implementation this number 
+// can be exceeded by a lot so that e.g. the first refinement
+// yields 250.000 cells (maxCells e.g. 100.000), so that
+// the next iterations probably won't do nothing until the
+// total number of cells has dropped below maxCells
+maxCells        150000;
+
+// Flux field and corresponding velocity field. Fluxes on changed
+// faces get recalculated by interpolating the velocity. Use 'none'
+// on surfaceScalarFields that do not need to be reinterpolated.
+// (not runtime-modifiable)
+correctFluxes
+(
+    (phi none)
+    (phi_0 none)
+    (phiAbs none)
+    (phiAbs_0 none)
+    (nHatf none)
+    (rho*phi none)
+    (ghf none)
+);
+
+// Write the refinement level as a volScalarField
+// (not runtime-modifiable)
+dumpLevel       true;

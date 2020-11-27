@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.1.1                                 |
+|  \\    /   O peration     | Version:  v2006                                 |
 |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -15,17 +15,22 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// note: balanceParDict is now expected in constant folder 
+// (but can be modified during runtime)
+// one symlink is needed inside each processor*/constant folder
+// for multi-region cases constant/regionName and processor*/constant/regionName
+
 numberOfSubdomains 4;
 
-method          ptscotch; //clsutered //scotch
+method          ptscotch; //clustered //scotch
 
 constraints
 {
-    refinementHistory
+    refinementHistoryMultiDim
     {
         //- Decompose cells such that all cell originating from single cell
         //  end up on same processor
-        type    refinementHistory;
+        type    refinementHistoryMultiDim;
     }
 }
 // ************************************************************************* //

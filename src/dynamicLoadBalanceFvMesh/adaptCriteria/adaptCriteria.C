@@ -48,12 +48,26 @@ Foam::adaptCriteria::adaptCriteria
 )
 :
     mesh_(mesh),
-    coeffDict_(dict),
     maxCellLevel_(dict.lookupOrDefault<label>("maxCellLevel",labelMax)),
     minCellLevel_(dict.lookupOrDefault<label>("minCellLevel",0)),
     negate_(dict.lookupOrDefault<bool>("negate",false))
 {}
 
+
+void Foam::adaptCriteria::updateDefaultValues
+(
+    const label maxCellLevel,
+    const label nLayers, 
+    const dictionary& criteriaDict
+)
+{
+    maxCellLevel_ = criteriaDict.lookupOrDefault<label>("maxCellLevel",maxCellLevel);
+    minCellLevel_ = criteriaDict.lookupOrDefault<label>("minCellLevel",0);
+    nLayer_ = criteriaDict.lookupOrDefault<label>("nLayer",nLayers);
+    negate_ = criteriaDict.lookupOrDefault<bool>("negate",false);
+
+    this->reReadDictionary(criteriaDict);
+}
 
 // * * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * //
 
@@ -65,7 +79,6 @@ Foam::autoPtr<Foam::adaptCriteria> Foam::adaptCriteria::New
 {
     // Get the name of the desired refinement selection algorithm
     const word adaptCriteriaTypeName(dict.lookup("type"));
-    Info<< "Creating adaptCriteria " << adaptCriteriaTypeName << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(adaptCriteriaTypeName);
