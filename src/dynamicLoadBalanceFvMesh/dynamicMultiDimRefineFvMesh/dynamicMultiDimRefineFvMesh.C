@@ -794,7 +794,6 @@ Foam::labelList Foam::dynamicMultiDimRefineFvMesh::selectRefineCells
             if
             (
                 (!unrefineableCell.test(celli))
-             && cellLevel[celli] < maxRefinement
             )
             {
                 candidates.append(celli);
@@ -803,9 +802,30 @@ Foam::labelList Foam::dynamicMultiDimRefineFvMesh::selectRefineCells
     }
     else
     {
+        Pout
+            << "Can not refine all cells, selecting only a few" << endl;
+        
+        // here you can define a rough overshoot when refining cells
+        // currently 2.5 % of maxCells
+        const label limProc = ceil(maxCells * 0.025 / Pstream::nProcs());
+        bool limitReached = false;
+        bool locAllAdded = false;
+
         // Sort by error? For now just truncate.
-        for (label level = 0; level < maxRefinement; ++level)
+        label i=0;
+        label level = 0;
+
+        if (Pstream::myProcNo() == 0)
         {
+            Pout
+                << "Trying to add "<< candidateCell.count()<< " cells in total"<< endl;
+        }
+
+        while ( !limitReached )
+        {
+            Pout
+                << "Adding cells with level "<< level<< endl;
+            
             for (const label celli : candidateCell)
             {
                 if
@@ -813,23 +833,88 @@ Foam::labelList Foam::dynamicMultiDimRefineFvMesh::selectRefineCells
                     (!unrefineableCell.test(celli))
                  && cellLevel[celli] == level
                 )
-                {
+                {   
                     candidates.append(celli);
+                    i++;
+
+                    // if (Pstream::myProcNo() == 0)
+                    // {
+                        Pout<< "added a cell, cell count is "<< i<< endl;
+                    // }
+                }
+
+                if (i % limProc == 0) 
+                {
+                    // if (Pstream::myProcNo() == 0)
+                    // {
+                        Pout
+                            << "Checking total number of added cells"<< endl;
+                        Pout
+                            << "Current # of added cells is "<< returnReduce(i, sumOp<label>())<< endl;
+                    // }
+                    if (returnReduce(i, sumOp<label>()) >= nTotToRefine)
+                    {
+                        Pout
+                            << "Limiting number of cells to refine"
+                            << endl;
+                        limitReached = true;
+                        break;
+                    }
+                    if (Pstream::myProcNo() == 0)
+                    {
+                        Pout<< "Cell limit not reached"<< endl;
+                    }
                 }
             }
 
-            if (returnReduce(candidates.size(), sumOp<label>()) > nTotToRefine)
-            {
-                Info
-                    << "Limiting number of cells to refine"
-                    << endl;
+            Pout
+                << i<< " cells added."<< endl;
 
-                break;
-            }
+            level++;
+            if (level > 2 ){ limitReached=true; }
         }
-    }
 
-    Info
+        locAllAdded = true;
+        bool allAdded = returnReduce(locAllAdded, andOp<bool>());
+
+        Pout
+            << "All processors finshed: "<< allAdded<< endl;
+
+        while (!returnReduce(allAdded, andOp<bool>()))
+        {
+            Pout<< "waiting.." <<endl;
+            sleep(1000);
+        }
+
+        Pout
+            << "All cells added."<< endl;
+
+        // for (label level = 0; level < maxRefinement; ++level)
+        // {
+        //     for (const label celli : candidateCell)
+        //     {
+        //         if
+        //         (
+        //             (!unrefineableCell.test(celli))
+        //          && cellLevel[celli] == level
+        //         )
+        //         {
+        //             candidates.append(celli);
+        //         }
+        //     }
+
+        //     if (returnReduce(candidates.size(), sumOp<label>()) > nTotToRefine)
+        //     {
+        //         Info
+        //             << "Limiting number of cells to refine"
+        //             << endl;
+
+        //         break;
+        //     }
+        // }
+    }
+    // Info
+    Pout
         << "Trying to get consistent refinement set for "
         << returnReduce(candidates.size(), sumOp<label>())
         << " cells"<< endl;
@@ -848,6 +933,7 @@ Foam::labelList Foam::dynamicMultiDimRefineFvMesh::selectRefineCells
         << " cells for refinement out of " << globalData().nTotalCells()
         << "." << endl;
 
+    Pout<< "Returning consistent set"<< endl;
     return consistentSet;
 }
 

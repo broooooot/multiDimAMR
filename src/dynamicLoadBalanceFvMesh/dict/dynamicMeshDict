@@ -116,6 +116,7 @@ refineInterval  5;
 nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
+// (can be overwritten via adaptCriteria)
 maxRefinement   2;
 
 // Stop refinement if maxCells reached
